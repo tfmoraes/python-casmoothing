@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 
+import argparse
 import itertools
 import numpy as np
 import sys
@@ -87,16 +88,26 @@ def visualize(pd, vertices_staircase):
 
 
 def main():
-    stl = read_stl(sys.argv[1])
+    parser = argparse.ArgumentParser(prog='Context-aware mesh smoothing')
+    parser.add_argument("file", help="A STL file", metavar="STL file")
+    parser.add_argument("-t", "--threshold", help="Threshold to find staircase artifacts", 
+                       type=float, default=0.7, dest='threshold')
+    args = parser.parse_args()
+
+    stl = read_stl(args.file)
 
     normals = vtk.vtkPolyDataNormals()
     normals.SetInput(stl)
     normals.ComputeCellNormalsOn()
     normals.Update()
+
+    clean = vtk.vtkCleanPolyData()
+    clean.SetInput(normals.GetOutput())
+    clean.Update()
     
-    pd = normals.GetOutput()
+    pd = clean.GetOutput()
     pd.BuildLinks()
-    vertices_staircase = find_staircase_artifacts(pd)
+    vertices_staircase = find_staircase_artifacts(pd, T=args.threshold)
     visualize(pd, vertices_staircase)
 
 
