@@ -17,7 +17,7 @@ def find_staircase_artifacts(pd, stack_orientation=(0, 0, 1), T=0.7):
     """
     output = []
     nv = pd.GetNumberOfPoints() # Number of vertices.
-    scalars = vtk.vtkIntArray()
+    scalars = vtk.vtkFloatArray()
     for vid in xrange(nv):
         idfaces = vtk.vtkIdList()
         pd.GetPointCells(vid, idfaces) # Getting faces connected to face vid.
@@ -49,6 +49,38 @@ def find_staircase_artifacts(pd, stack_orientation=(0, 0, 1), T=0.7):
 
     return output
 
+def calc_artifacts_weight(pd, vertices_staircase, tmax=2.0):
+    """
+    Calculate the artifact weight based on distance of each vertex to its
+    nearest staircase artifact vertex.
+    pd - vtkPolydata;
+    vertices_staircase - the identified staircase artifact vertices;
+    tmax=2 - max distance the vertex must be to its nearest artifact vertex to
+             considered to calculate the weight.
+    """
+    scalars = pd.GetPointData().GetScalars()
+    for vid in vertices_staircase:
+        vi = pd.GetPoint(vid)
+        idfaces = vtk.vtkIdList()
+        pd.GetPointCells(vid, idfaces) # Getting faces connected to face vid.
+
+        nf = idfaces.GetNumberOfIds()
+        # For each combination of connected faces
+        for nid in xrange(nf):
+            fid = idfaces.GetId(nid)
+            face = pd.GetCell(fid)
+            
+            for i in xrange(3):
+                vjid = face.GetPointId(i)
+                #if vjid == vid:
+                    #continue
+                vj = pd.GetPoint(vjid)
+                d = np.sqrt((vi[0]-vj[0])**2 + (vi[1]-vj[1])**2 + (vi[2]-vj[2])**2)
+                if d <= tmax:
+                    value = (1.0 - d/tmax)
+                    scalars.SetValue(vjid, value)
+
+
 
 def read_stl(filename):
     "It only reads a STL file, it can be binary or ascii format."
@@ -57,20 +89,21 @@ def read_stl(filename):
     stl_reader.SetFileName(filename)
     stl_reader.Update()
 
-
     output = stl_reader.GetOutput()
     return output
 
+
 def visualize(pd, vertices_staircase):
     lt = vtk.vtkLookupTable()
-    lt.SetNumberOfColors(2)
-    lt.Build()
-    lt.SetTableValue(0, 1, 1, 1, 1)
-    lt.SetTableValue(1, 1, 0, 0, 1)
+    lt.SetNumberOfColors(100)
+    lt.SetValueRange(0, 1)
+    #lt.Build()
+    lt.SetTableValue(0, 0, 0, 1, 1)
+    lt.SetTableValue(99, 1, 0, 0, 1)
 
     m = vtk.vtkPolyDataMapper()
     m.SetInput(pd)
-    m.SetScalarRange(0, 1)
+    m.SetScalarRange(0.0, 1.0)
     m.SetLookupTable(lt)
 
     a = vtk.vtkActor()
@@ -108,7 +141,13 @@ def main():
     pd = clean.GetOutput()
     pd.BuildLinks()
     vertices_staircase = find_staircase_artifacts(pd, T=args.threshold)
+    calc_artifacts_weight(pd, vertices_staircase)
     visualize(pd, vertices_staircase)
+
+    writer = vtk.vtkXMLPolyDataWriter()
+    writer.SetInput(pd)
+    writer.SetFileName("/tmp/test_cor.vtp")
+    writer.Write()
 
 
 if __name__ == '__main__':
