@@ -1,3 +1,6 @@
+#include <math.h>
+#include <map>
+#include <queue>
 #include <stdlib.h>
 #include <vtkSmartPointer.h>
 #include <vtkIdList.h>
@@ -26,9 +29,12 @@
 #include <vtkDataArray.h>
 #include <vtkPointData.h>
 #include <vtkXMLPolyDataWriter.h>
+#include <vtkCell.h>
 
 vtkPolyData* read_stl(char*);
 vtkDoubleArray* find_staircase_artifacts(vtkPolyData*, const double[3], double);
+vtkIdList* get_near_vertices_to_v(vtkPolyData*, int, double);
+vtkDoubleArray* calc_artifacts_weight(vtkPolyData*, vtkIdList*, double, double);
 
 int main(int argc, char *argv[])
 {
@@ -81,11 +87,12 @@ vtkDoubleArray* find_staircase_artifacts(vtkPolyData* pd, const double stack_ori
     
     double *ni;
     vtkDoubleArray *output = vtkDoubleArray::New();
-    vtkFloatArray *scalars = vtkFloatArray::New();
+    vtkDoubleArray *scalars = vtkDoubleArray::New();
+    vtkIdList *idfaces;//idfaces = vtk.vtkIdList()
     
     nv = pd->GetNumberOfPoints(); // Number of vertices.
     for (int vid=0; vid < nv; vid++){ //for vid in xrange(nv):
-        vtkIdList *idfaces = vtkIdList::New();//idfaces = vtk.vtkIdList()
+        idfaces = vtkIdList::New();//idfaces = vtk.vtkIdList()
 	pd->GetPointCells(vid, idfaces); //pd.GetPointCells(vid, idfaces) # Getting faces connected to face vid.
         nf = idfaces->GetNumberOfIds();
 	
@@ -101,6 +108,8 @@ vtkDoubleArray* find_staircase_artifacts(vtkPolyData* pd, const double stack_ori
 	    if (of < min) min = of;
 	}
 
+        // Getting the ones which normals dot is 90°, its vertex is added to
+        // output
 	if (max - min >= T) {
 	    output->InsertNextValue(vid);
 	    scalars->InsertNextValue(1);
@@ -108,43 +117,90 @@ vtkDoubleArray* find_staircase_artifacts(vtkPolyData* pd, const double stack_ori
 	else {
 	    scalars->InsertNextValue(0);
 	}
-	free(idfaces);
+	idfaces->Delete();
     }
     vtkPointData* pointData = pd->GetPointData();
     pointData->SetScalars(scalars);
     return output;
+}
+
+vtkIdList* get_near_vertices_to_v(vtkPolyData* pd, int v, double dmax){
     /*
-        
+    Returns all vertices with distance at most "d" to the vertice "v" with
+    their distances.
+    pd - vtkPolydata
+    v - the reference vertice
+    dmax - the maximun distance.
+    */
+    double vi[3], vj[3], d;
+    int n=0, nf, fid;
+    
+    std::map <int, bool> status_v;
+    std::queue <int> to_visit;
 
-        orientations = []
-        # For each combination of connected faces
-        for nid in xrange(nf):
-            fid = idfaces.GetId(nid)
-            ni = pd.GetCellData().GetArray("Normals").GetTuple(fid)
+    vtkIdList* near_vertices = vtkIdList::New();
+    vtkIdList* idfaces;
 
-            of = 1 - np.dot(ni, stack_orientation)
-            orientations.append(of)
+    pd->GetPoint(v, vi); // The position of vertex v
 
-        minimun = min(orientations)
-        maximun = max(orientations)
+    while (1) {
+            idfaces = vtkIdList::New();
+            pd->GetPointCells(v, idfaces);
+            nf = idfaces->GetNumberOfIds();
+            for(int nid=0; nid < nf; nid++) {
+                fid = idfaces->GetId(nid);
+                vtkCell* face = pd->GetCell(fid);
 
-        # Getting the ones which normals dot is 90°, its vertex is added to
-        # output
-        if maximun - minimun >= T:
-            output.append(vid)
-            scalars.InsertNextValue(1)
-        else:
-            scalars.InsertNextValue(0)
+                for(int i=0; i < 3; i++) {
+                    int vjid = face->GetPointId(i);
+                    if (status_v.find(vjid) == status_v.end() or !status_v[vjid]) {
+                            pd->GetPoint(vjid, vj);
+                            d = sqrt((vi[0] - vj[0]) * (vi[0] - vj[0])\
+                                   + (vi[1] - vj[1]) * (vi[1] - vj[1])\
+                                   + (vi[2] - vj[2]) * (vi[2] - vj[2]));
+                            if (d <= dmax) {
+                                near_vertices->InsertNextId(vjid);
+                                to_visit.push(vjid);
+                            }
+                    }
+                    status_v[vjid] = true;
+                }
+            }
 
+            n++;
 
-    pd.GetPointData().SetScalars(scalars)
-
-    return output
-   */
+            if (to_visit.empty())
+                break;
+            v = to_visit.front();
+            to_visit.pop();
+            idfaces->Delete();
     }
+
+    return near_vertices;
+}
+
+vtkDoubleArray* calc_artifacts_weight(vtkPolyData* pd, vtkIdList* vertices_staircase, double tmax, double bmin) {
+    /*
+    Calculate the artifact weight based on distance of each vertex to its
+    nearest staircase artifact vertex.
+    pd - vtkPolydata;
+    vertices_staircase - the identified staircase artifact vertices;
+    tmax=2 - max distance the vertex must be to its nearest artifact vertex to
+             considered to calculate the weight;
+    bmin=0.1 - The minimun weight.
+    */
+    vtkDoubleArray* weights = vtkDoubleArray::New();
+    vtkDataArray* scalars = pd->GetPointData()->GetScalars();
+    double vi[3], vj[3];
+    int viid, vjid;
+    int nid = vertices_staircase->GetNumberOfIds();
+    for(int i=0; i < nid; i++) {
+        viid = vertices_staircase->GetId(i);
+    }
+    return weights;
+    
+}
 /*
-
-
 def get_near_vertices_to_v(pd, v, dmax):
     """
     Returns all vertices with distance at most "d" to the vertice "v" with
