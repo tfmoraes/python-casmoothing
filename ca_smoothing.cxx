@@ -32,7 +32,7 @@
 #include <vtkCell.h>
 
 vtkPolyData* read_stl(char*);
-vtkDoubleArray* find_staircase_artifacts(vtkPolyData*, const double[3], double);
+vtkIdList* find_staircase_artifacts(vtkPolyData*, const double[3], double);
 vtkIdList* get_near_vertices_to_v(vtkPolyData*, int, double);
 vtkDoubleArray* calc_artifacts_weight(vtkPolyData*, vtkIdList*, double, double);
 
@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 	vtkPolyData *stl, *nm, *cl, *pd;
 	vtkPolyDataNormals *normals;
 	vtkCleanPolyData *clean;
-	vtkDoubleArray *vertices_staircase;
+	vtkIdList *vertices_staircase;
 	
 	stl = read_stl(argv[1]);
 
@@ -58,7 +58,8 @@ int main(int argc, char *argv[])
 	pd = clean->GetOutput();
 	pd->BuildLinks();
 
-	vertices_staircase = find_staircase_artifacts(pd, stack_orientation, 0.7);
+	vertices_staircase = find_staircase_artifacts(pd, stack_orientation, atof(argv[2]));
+    calc_artifacts_weight(pd, vertices_staircase, atof(argv[3]), 1);
 	
 	vtkXMLPolyDataWriter *writer = vtkXMLPolyDataWriter::New();
 	writer->SetInput(pd);
@@ -74,7 +75,7 @@ vtkPolyData* read_stl(char* filename) {
 	return stl_reader->GetOutput();
 }
 
-vtkDoubleArray* find_staircase_artifacts(vtkPolyData* pd, const double stack_orientation[3], double T) {
+vtkIdList* find_staircase_artifacts(vtkPolyData* pd, const double stack_orientation[3], double T) {
     /*
     This function is used to find vertices at staircase artifacts, which are
     those vertices whose incident faces' orientation differences are
@@ -86,7 +87,7 @@ vtkDoubleArray* find_staircase_artifacts(vtkPolyData* pd, const double stack_ori
     double of, min, max;
     
     double *ni;
-    vtkDoubleArray *output = vtkDoubleArray::New();
+    vtkIdList *output = vtkIdList::New();
     vtkDoubleArray *scalars = vtkDoubleArray::New();
     vtkIdList *idfaces;//idfaces = vtk.vtkIdList()
     
@@ -111,7 +112,7 @@ vtkDoubleArray* find_staircase_artifacts(vtkPolyData* pd, const double stack_ori
         // Getting the ones which normals dot is 90°, its vertex is added to
         // output
 	if (max - min >= T) {
-	    output->InsertNextValue(vid);
+	    output->InsertNextId(vid);
 	    scalars->InsertNextValue(1);
 	}
 	else {
@@ -189,16 +190,38 @@ vtkDoubleArray* calc_artifacts_weight(vtkPolyData* pd, vtkIdList* vertices_stair
              considered to calculate the weight;
     bmin=0.1 - The minimun weight.
     */
+    double vi[3], vj[3], d, value;
+    int viid, vjid, nnv;
+    int nid = vertices_staircase->GetNumberOfIds();
+    vtkIdList* near_vertices;
     vtkDoubleArray* weights = vtkDoubleArray::New();
     vtkDataArray* scalars = pd->GetPointData()->GetScalars();
-    double vi[3], vj[3];
-    int viid, vjid;
-    int nid = vertices_staircase->GetNumberOfIds();
-    for(int i=0; i < nid; i++) {
-        viid = vertices_staircase->GetId(i);
+    for (int i=0; i < pd->GetNumberOfPoints(); i++){
+        weights->InsertNextValue(0);
     }
+    for (int i=0; i < nid; i++) {
+        viid = vertices_staircase->GetId(i);
+        pd->GetPoint(viid, vi);
+        near_vertices = get_near_vertices_to_v(pd, viid, tmax);
+        nnv = near_vertices->GetNumberOfIds();
+        for (int j=0; j < nnv; j++){
+            vjid = near_vertices->GetId(j);
+            pd->GetPoint(vjid, vj);
+            d = sqrt((vi[0] - vj[0]) * (vi[0] - vj[0])\
+                     + (vi[1] - vj[1]) * (vi[1] - vj[1])\
+                     + (vi[2] - vj[2]) * (vi[2] - vj[2]));
+            value = (1.0 - d/tmax) * (1 - bmin) + bmin;
+            if (value > weights->GetValue(vjid)) {
+                printf("%f\n", value);
+                weights->SetValue(vjid, value);
+                scalars->SetTuple1(vjid, value);
+            }
+        }
+    }
+
+    vtkPointData* pointData = pd->GetPointData();
+    pointData->SetScalars(scalars);
     return weights;
-    
 }
 /*
 def get_near_vertices_to_v(pd, v, dmax):
