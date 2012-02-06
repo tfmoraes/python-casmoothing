@@ -33,12 +33,20 @@
 #include <vtkXMLPolyDataWriter.h>
 #include <vtkCell.h>
 
+typedef struct _Point
+{
+  double x;
+  double y;
+  double z;
+} Point;
+
 vtkPolyData* read_stl(char*);
 vtkIdList* find_staircase_artifacts(vtkPolyData*, const double[3], double);
 vtkIdList* get_near_vertices_to_v(vtkPolyData*, int, double);
 vtkDoubleArray* calc_artifacts_weight(vtkPolyData*, vtkIdList*, double, double);
-void calc_d(vtkPolyData*, int, double[3]);
+Point calc_d(vtkPolyData*, int);
 vtkPolyData* taubin_smooth(vtkPolyData*, vtkDoubleArray*, double, double, int);
+
 
 int main(int argc, char *argv[])
 {
@@ -69,7 +77,7 @@ int main(int argc, char *argv[])
     
     vtkXMLPolyDataWriter *writer = vtkXMLPolyDataWriter::New();
     writer->SetInput(tpd);
-    writer->SetFileName("/tmp/saida.vtp");
+    writer->SetFileName("saida.vtp");
     writer->Write();
     return 0;
 }
@@ -160,7 +168,7 @@ vtkIdList* get_near_vertices_to_v(vtkPolyData* pd, int v, double dmax){
 
             for(int i=0; i < 3; i++) {
                 int vjid = face->GetPointId(i);
-                if (status_v.find(vjid) == status_v.end() or !status_v[vjid]) {
+                if (status_v.find(vjid) == status_v.end() || !status_v[vjid]) {
                     pd->GetPoint(vjid, vj);
                     d = sqrt((vi[0] - vj[0]) * (vi[0] - vj[0])\
                             + (vi[1] - vj[1]) * (vi[1] - vj[1])\
@@ -230,7 +238,8 @@ vtkDoubleArray* calc_artifacts_weight(vtkPolyData* pd, vtkIdList* vertices_stair
     return weights;
 }
 
-void calc_d(vtkPolyData* pd, int vid, double D[3]){
+Point calc_d(vtkPolyData* pd, int vid){
+    Point D;
     int nf, fid, n=0;
     double vi[3], vj[3];
     std::set<int> vertices;
@@ -246,51 +255,54 @@ void calc_d(vtkPolyData* pd, int vid, double D[3]){
             vertices.insert(vjid);
         }
     }
-
-    D[0] = 0;
-    D[1] = 0;
-    D[2] = 0;
+    D.x = 0;
+    D.y = 0;
+    D.z = 0;
 
     pd->GetPoint(vid, vi); // The position of vertex v 
     for (it=vertices.begin(); it!=vertices.end(); it++) {
         pd->GetPoint(*it, vj);
-        D[0] = D[0] + (vi[0] - vj[0]);
-        D[1] = D[1] + (vi[1] - vj[1]);
-        D[2] = D[2] + (vi[2] - vj[2]);
+        D.x = D.x + (vi[0] - vj[0]);
+        D.y = D.y + (vi[1] - vj[1]);
+        D.z = D.z + (vi[2] - vj[2]);
         n++;
     }
-    D[0] = D[0] / n;
-    D[1] = D[1] / n;
-    D[2] = D[2] / n;
+    
+    D.x = D.x / n;
+    D.y = D.y / n;
+    D.z = D.z / n;
+    return D;
 }
 
 vtkPolyData* taubin_smooth(vtkPolyData* pd, vtkDoubleArray* weights, double l, double m, int steps){
     double vi[3];
-    std::vector<double[3]> D;
     vtkPolyData* new_pd = vtkPolyData::New();
     new_pd->DeepCopy(pd);
-    D.reserve(pd->GetNumberOfPoints());
-
+    std::vector<Point> D(pd->GetNumberOfPoints());
+    //D.reserve(pd->GetNumberOfPoints());
+    
     for (int s=0; s < steps; s++) {
         for (int i=0; i < pd->GetNumberOfPoints(); i++) {
-            calc_d(new_pd, i, D[i]);
+            D[i] = calc_d(new_pd, i);
         }
+
         for (int i=0; i < pd->GetNumberOfPoints(); i++) {
             new_pd->GetPoint(i, vi);
-            vi[0] = vi[0] + weights->GetValue(i)*l*D[i][0];
-            vi[1] = vi[1] + weights->GetValue(i)*l*D[i][1];
-            vi[2] = vi[2] + weights->GetValue(i)*l*D[i][2];
+            vi[0] = vi[0] + weights->GetValue(i)*l*D[i].x;
+            vi[1] = vi[1] + weights->GetValue(i)*l*D[i].y;
+            vi[2] = vi[2] + weights->GetValue(i)*l*D[i].z;
             new_pd->GetPoints()->SetPoint(i, vi);
         }
 
         for (int i=0; i < pd->GetNumberOfPoints(); i++) {
-            calc_d(new_pd, i, D[i]);
+            D[i] = calc_d(new_pd, i);
         }
+
         for (int i=0; i < pd->GetNumberOfPoints(); i++) {
             new_pd->GetPoint(i, vi);
-            vi[0] = vi[0] + weights->GetValue(i)*m*D[i][0];
-            vi[1] = vi[1] + weights->GetValue(i)*m*D[i][1];
-            vi[2] = vi[2] + weights->GetValue(i)*m*D[i][2];
+            vi[0] = vi[0] + weights->GetValue(i)*m*D[i].x;
+            vi[1] = vi[1] + weights->GetValue(i)*m*D[i].y;
+            vi[2] = vi[2] + weights->GetValue(i)*m*D[i].z;
             new_pd->GetPoints()->SetPoint(i, vi);
         }
     }
