@@ -1,53 +1,4 @@
-#include <math.h>
-#include <map>
-#include <queue>
-#include <set>
-#include <vector>
-#include <stdlib.h>
-#include <vtkSmartPointer.h>
-#include <vtkIdList.h>
-#include <vtkPolyData.h>
-#include <vtkCellData.h>
-#include <vtkDoubleArray.h>
-#include <vtkFloatArray.h>
-#include <vtkDataSet.h>
-#include <vtkSphereSource.h>
-#include <vtkTriangleFilter.h>
-#include <vtkExtractEdges.h>
-#include <vtkDataSetMapper.h>
-#include <vtkActor.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderer.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkIdTypeArray.h>
-#include <vtkSelectionNode.h>
-#include <vtkSelection.h>
-#include <vtkExtractSelection.h>
-#include <vtkProperty.h>
-#include <vtkVertexGlyphFilter.h>
-#include <vtkSTLReader.h>
-#include <vtkPLYWriter.h>
-#include <vtkPolyDataNormals.h>
-#include <vtkCleanPolyData.h>
-#include <vtkDataArray.h>
-#include <vtkPointData.h>
-#include <vtkXMLPolyDataWriter.h>
-#include <vtkCell.h>
-
-typedef struct _Point
-{
-  double x;
-  double y;
-  double z;
-} Point;
-
-vtkPolyData* read_stl(char*);
-vtkIdList* find_staircase_artifacts(vtkPolyData*, const double[3], double);
-vtkIdList* get_near_vertices_to_v(vtkPolyData*, int, double);
-vtkDoubleArray* calc_artifacts_weight(vtkPolyData*, vtkIdList*, double, double);
-Point calc_d(vtkPolyData*, int);
-vtkPolyData* taubin_smooth(vtkPolyData*, vtkDoubleArray*, double, double, int);
-
+#include "ca_smoothing.h"
 
 int main(int argc, char *argv[])
 {
@@ -108,7 +59,7 @@ vtkIdList* find_staircase_artifacts(vtkPolyData* pd, const double stack_orientat
     BuildLinks() has been called.
     */
     int nv, nf, fid;
-    double of, min, max;
+    double of_z, of_y, of_x, min_z, max_z, min_y, max_y, min_x, max_x;
     
     double *ni;
     vtkIdList *output = vtkIdList::New();
@@ -121,21 +72,33 @@ vtkIdList* find_staircase_artifacts(vtkPolyData* pd, const double stack_orientat
     pd->GetPointCells(vid, idfaces); //pd.GetPointCells(vid, idfaces) # Getting faces connected to face vid.
         nf = idfaces->GetNumberOfIds();
     
-    max = -1000;
-    min = 1000;
+    max_z = -1000;
+    min_z = 1000;
+    max_y = -1000;
+    min_y = 1000;
+    max_x = -1000;
+    min_x = 1000;
     for (int nid=0; nid < nf; nid++) {
         fid = idfaces->GetId(nid);
         ni = pd->GetCellData()->GetArray("Normals")->GetTuple(fid);
 
-        of = 1 - (ni[0]*stack_orientation[0] + ni[1]*stack_orientation[1] + ni[2]*stack_orientation[2]);
+        of_z = 1 - (ni[0]*stack_orientation[0] + ni[1]*stack_orientation[1] + ni[2]*stack_orientation[2]);
+        of_y = 1 - (ni[0]*0 + ni[1]*1 + ni[2]*0);
+        of_x = 1 - (ni[0]*1 + ni[1]*0 + ni[2]*0);
 
-        if (of > max) max = of;
-        if (of < min) min = of;
+        if (of_z > max_z) max_z = of_z;
+        if (of_z < min_z) min_z = of_z;
+
+        if (of_y > max_y) max_y = of_y;
+        if (of_y < min_y) min_y = of_y;
+
+        if (of_x > max_x) max_x = of_x;
+        if (of_x < min_x) min_x = of_x;
     }
 
         // Getting the ones which normals dot is 90°, its vertex is added to
         // output
-    if (max - min >= T) {
+    if ((max_z - min_z >= T) || (max_y - min_y >= T) || (max_x - min_x >= T)) {
         output->InsertNextId(vid);
         scalars->InsertNextValue(1);
     }
