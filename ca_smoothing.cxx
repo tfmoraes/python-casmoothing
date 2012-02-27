@@ -9,13 +9,16 @@ int main(int argc, char *argv[])
     vtkIdList *vertices_staircase;
     vtkDoubleArray* weights;
     
+    printf("Reading STL\n");
     stl = read_stl(argv[1]);
 
+    printf("Generating the normals\n");
     normals = vtkPolyDataNormals::New();
     normals->SetInput(stl);
     normals->ComputeCellNormalsOn();
     normals->Update();
 
+    printf("Cleaning the polydata\n");
     clean = vtkCleanPolyData::New();
     clean->SetInput(normals->GetOutput());
     clean->Update();
@@ -23,8 +26,11 @@ int main(int argc, char *argv[])
     pd = clean->GetOutput();
     pd->BuildLinks();
 
+    printf("Finding staircase artifacts\n");
     vertices_staircase = find_staircase_artifacts(pd, stack_orientation, atof(argv[2]));
+    printf("Calculating the Weights\n");
     weights = calc_artifacts_weight(pd, vertices_staircase, atof(argv[3]), atof(argv[4]));
+    printf("Taubin Smooth\n");
     tpd = taubin_smooth(pd, weights, 0.5, -0.53, atoi(argv[5]));
 
     vertices_staircase->Delete();
@@ -199,7 +205,6 @@ vtkDoubleArray* calc_artifacts_weight(vtkPolyData* pd, vtkIdList* vertices_stair
                     + (vi[2] - vj[2]) * (vi[2] - vj[2]));
             value = (1.0 - d/tmax) * (1 - bmin) + bmin;
             if (value > weights->GetValue(vjid)) {
-                printf("%f\n", value);
                 weights->SetValue(vjid, value);
                 scalars->SetTuple1(vjid, value);
             }
@@ -229,6 +234,7 @@ Point calc_d(vtkPolyData* pd, int vid){
             vertices.insert(vjid);
         }
     }
+    idfaces->Delete();
     D.x = 0;
     D.y = 0;
     D.z = 0;
@@ -258,6 +264,7 @@ vtkPolyData* taubin_smooth(vtkPolyData* pd, vtkDoubleArray* weights, double l, d
     D = (Point*) malloc(pd->GetNumberOfPoints() * sizeof(Point));
     
     for (int s=0; s < steps; s++) {
+        printf("Step %d\n", s);
         for (int i=0; i < pd->GetNumberOfPoints(); i++) {
             D[i] = calc_d(new_pd, i);
         }
