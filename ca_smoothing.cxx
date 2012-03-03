@@ -130,6 +130,7 @@ vtkIdList* get_near_vertices_to_v(vtkPolyData* pd, int v, double dmax){
     int n=0, nf, fid;
     
     std::map <int, bool> status_v;
+    std::map <int, bool> status_f;
     std::queue <int> to_visit;
 
     vtkIdList* near_vertices = vtkIdList::New();
@@ -143,6 +144,14 @@ vtkIdList* get_near_vertices_to_v(vtkPolyData* pd, int v, double dmax){
         nf = idfaces->GetNumberOfIds();
         for(int nid=0; nid < nf; nid++) {
             fid = idfaces->GetId(nid);
+            if (status_f.find(fid) != status_f.end()) {
+                if (to_visit.empty())
+                    break;
+                v = to_visit.front();
+                to_visit.pop();
+                continue;
+            }
+            status_f[fid] = true;
             vtkCell* face = pd->GetCell(fid);
 
             for(int i=0; i < 3; i++) {
