@@ -75,43 +75,43 @@ vtkIdList* find_staircase_artifacts(vtkPolyData* pd, const double stack_orientat
     nv = pd->GetNumberOfPoints(); // Number of vertices.
     for (int vid=0; vid < nv; vid++){ //for vid in xrange(nv):
         idfaces = vtkIdList::New();//idfaces = vtk.vtkIdList()
-    pd->GetPointCells(vid, idfaces); //pd.GetPointCells(vid, idfaces) # Getting faces connected to face vid.
+        pd->GetPointCells(vid, idfaces); //pd.GetPointCells(vid, idfaces) # Getting faces connected to face vid.
         nf = idfaces->GetNumberOfIds();
     
-    max_z = -1000;
-    min_z = 1000;
-    max_y = -1000;
-    min_y = 1000;
-    max_x = -1000;
-    min_x = 1000;
-    for (int nid=0; nid < nf; nid++) {
-        fid = idfaces->GetId(nid);
-        ni = pd->GetCellData()->GetArray("Normals")->GetTuple(fid);
+        max_z = -1000;
+        min_z = 1000;
+        max_y = -1000;
+        min_y = 1000;
+        max_x = -1000;
+        min_x = 1000;
+        for (int nid=0; nid < nf; nid++) {
+            fid = idfaces->GetId(nid);
+            ni = pd->GetCellData()->GetArray("Normals")->GetTuple(fid);
 
-        of_z = 1 - (ni[0]*stack_orientation[0] + ni[1]*stack_orientation[1] + ni[2]*stack_orientation[2]);
-        of_y = 1 - (ni[0]*0 + ni[1]*1 + ni[2]*0);
-        of_x = 1 - (ni[0]*1 + ni[1]*0 + ni[2]*0);
+            of_z = 1 - (ni[0]*stack_orientation[0] + ni[1]*stack_orientation[1] + ni[2]*stack_orientation[2]);
+            of_y = 1 - (ni[0]*0 + ni[1]*1 + ni[2]*0);
+            of_x = 1 - (ni[0]*1 + ni[1]*0 + ni[2]*0);
 
-        if (of_z > max_z) max_z = of_z;
-        if (of_z < min_z) min_z = of_z;
+            if (of_z > max_z) max_z = of_z;
+            if (of_z < min_z) min_z = of_z;
 
-        if (of_y > max_y) max_y = of_y;
-        if (of_y < min_y) min_y = of_y;
+            if (of_y > max_y) max_y = of_y;
+            if (of_y < min_y) min_y = of_y;
 
-        if (of_x > max_x) max_x = of_x;
-        if (of_x < min_x) min_x = of_x;
-    }
+            if (of_x > max_x) max_x = of_x;
+            if (of_x < min_x) min_x = of_x;
+        }
 
         // Getting the ones which normals dot is 90°, its vertex is added to
         // output
-    if ((max_z - min_z >= T) || (max_y - min_y >= T) || (max_x - min_x >= T)) {
-        output->InsertNextId(vid);
-        scalars->InsertNextValue(1);
-    }
-    else {
-        scalars->InsertNextValue(0);
-    }
-    idfaces->Delete();
+        if ((max_z - min_z >= T) || (max_y - min_y >= T) || (max_x - min_x >= T)) {
+            output->InsertNextId(vid);
+            scalars->InsertNextValue(1);
+        }
+        else {
+            scalars->InsertNextValue(0);
+        }
+        idfaces->Delete();
     }
     vtkPointData* pointData = pd->GetPointData();
     pointData->SetScalars(scalars);
@@ -129,7 +129,7 @@ vtkIdList* get_near_vertices_to_v(vtkPolyData* pd, int v, double dmax){
     double vi[3], vj[3], d;
     int n=0, nf, fid;
     
-    std::map <int, bool> status_v;
+    std::unordered_map <int, bool> status_v;
     std::queue <int> to_visit;
 
     vtkIdList* near_vertices = vtkIdList::New();
