@@ -88,9 +88,9 @@ vtkIdList* find_staircase_artifacts(vtkPolyData* pd, const double stack_orientat
             fid = idfaces->GetId(nid);
             ni = pd->GetCellData()->GetArray("Normals")->GetTuple(fid);
 
-            of_z = 1 - (ni[0]*stack_orientation[0] + ni[1]*stack_orientation[1] + ni[2]*stack_orientation[2]);
-            of_y = 1 - (ni[0]*0 + ni[1]*1 + ni[2]*0);
-            of_x = 1 - (ni[0]*1 + ni[1]*0 + ni[2]*0);
+            of_z = 1 - abs(ni[0]*stack_orientation[0] + ni[1]*stack_orientation[1] + ni[2]*stack_orientation[2]);
+            of_y = 1 - abs(ni[0]*0 + ni[1]*1 + ni[2]*0);
+            of_x = 1 - abs(ni[0]*1 + ni[1]*0 + ni[2]*0);
 
             if (of_z > max_z) max_z = of_z;
             if (of_z < min_z) min_z = of_z;
@@ -104,7 +104,7 @@ vtkIdList* find_staircase_artifacts(vtkPolyData* pd, const double stack_orientat
 
         // Getting the ones which normals dot is 90°, its vertex is added to
         // output
-        if ((max_z - min_z >= T) || (max_y - min_y >= T) || (max_x - min_x >= T)) {
+        if ((abs(max_z - min_z) >= T) || (abs(max_y - min_y) >= T) || (abs(max_x - min_x) >= T)) {
             output->InsertNextId(vid);
             scalars->InsertNextValue(1);
         }
@@ -130,6 +130,7 @@ vtkIdList* get_near_vertices_to_v(vtkPolyData* pd, int v, double dmax){
     int n=0, nf, fid;
     
     std::unordered_map <int, bool> status_v;
+    std::unordered_map <int, bool> status_f;
     std::queue <int> to_visit;
 
     vtkIdList* near_vertices = vtkIdList::New();
@@ -143,6 +144,14 @@ vtkIdList* get_near_vertices_to_v(vtkPolyData* pd, int v, double dmax){
         nf = idfaces->GetNumberOfIds();
         for(int nid=0; nid < nf; nid++) {
             fid = idfaces->GetId(nid);
+            if (status_f.find(fid) != status_f.end()) {
+                if (to_visit.empty())
+                    break;
+                v = to_visit.front();
+                to_visit.pop();
+                continue;
+            }
+            status_f[fid] = true;
             vtkCell* face = pd->GetCell(fid);
 
             for(int i=0; i < 3; i++) {
