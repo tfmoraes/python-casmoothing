@@ -42,7 +42,9 @@ typedef struct _Point
   double z;
 } Point;
 
-vtkPolyData* read_stl(char*);
+
+vtkPolyData* get_sphere (void);
+vtkPolyData* ca_smoothing (vtkPolyData*, double, double, double, int);
 vtkIdList* find_staircase_artifacts(vtkPolyData*, const double[3], double);
 vtkIdList* get_near_vertices_to_v(vtkPolyData*, int, double);
 vtkDoubleArray* calc_artifacts_weight(vtkPolyData*, vtkIdList*, double, double);

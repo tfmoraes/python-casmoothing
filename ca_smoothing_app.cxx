@@ -1,13 +1,17 @@
 #include "ca_smoothing.h"
 
+vtkPolyData* read_stl(char* filename) {
+    vtkSTLReader *stl_reader = vtkSTLReader::New();
+    stl_reader->SetFileName(filename);
+    stl_reader->Update();
+    return stl_reader->GetOutput();
+}
+
 int main(int argc, char *argv[])
 {
-    const double stack_orientation[3] = { 0, 0, 1 };
     vtkPolyData *stl, *nm, *cl, *pd, *tpd;
     vtkPolyDataNormals *normals;
     vtkCleanPolyData *clean;
-    vtkIdList *vertices_staircase;
-    vtkDoubleArray* weights;
     
     printf("Reading STL\n");
     stl = read_stl(argv[1]);
@@ -25,17 +29,9 @@ int main(int argc, char *argv[])
 
     pd = clean->GetOutput();
     pd->BuildLinks();
-
-    printf("Finding staircase artifacts\n");
-    vertices_staircase = find_staircase_artifacts(pd, stack_orientation, atof(argv[2]));
-    printf("Calculating the Weights\n");
-    weights = calc_artifacts_weight(pd, vertices_staircase, atof(argv[3]), atof(argv[4]));
-    printf("Taubin Smooth\n");
-    tpd = taubin_smooth(pd, weights, 0.5, -0.53, atoi(argv[5]));
-
-    vertices_staircase->Delete();
-    weights->Delete();
     
+    tpd = ca_smoothing(pd, atof(argv[2]), atof(argv[3]), atof(argv[4]),atoi(argv[5]));
+
     vtkXMLPolyDataWriter *writer = vtkXMLPolyDataWriter::New();
     writer->SetInput(pd);
     writer->SetFileName("saida.vtp");

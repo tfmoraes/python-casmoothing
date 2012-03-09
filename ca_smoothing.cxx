@@ -1,10 +1,29 @@
 #include "ca_smoothing.h"
+ 
+vtkPolyData* get_sphere (void) {
+    vtkPolyData  *pd;
+    return pd;
+}
 
-vtkPolyData* read_stl(char* filename) {
-    vtkSTLReader *stl_reader = vtkSTLReader::New();
-    stl_reader->SetFileName(filename);
-    stl_reader->Update();
-    return stl_reader->GetOutput();
+vtkPolyData* ca_smoothing(vtkPolyData* pd, double T, double tmax, double bmin, int n_iter) {
+    const double stack_orientation[3] = { 0, 0, 1 };
+
+    vtkPolyData *tpd;
+    vtkIdList *vertices_staircase;
+    vtkDoubleArray* weights;
+
+    printf("Finding staircase artifacts\n");
+    printf("Numero de pontos %ld", pd->GetNumberOfPoints());
+    vertices_staircase = find_staircase_artifacts(pd, stack_orientation, T);
+    printf("Calculating the Weights\n");
+    weights = calc_artifacts_weight(pd, vertices_staircase, tmax, bmin);
+    printf("Taubin Smooth\n");
+    tpd = taubin_smooth(pd, weights, 0.5, -0.53, n_iter);
+
+    vertices_staircase->Delete();
+    weights->Delete();
+
+    return tpd;
 }
 
 vtkIdList* find_staircase_artifacts(vtkPolyData* pd, const double stack_orientation[3], double T) {
