@@ -48,3 +48,4 @@ vtkIdList* get_near_vertices_to_v(vtkPolyData*, int, double);
 vtkDoubleArray* calc_artifacts_weight(vtkPolyData*, vtkIdList*, double, double);
 Point calc_d(vtkPolyData*, int);
 vtkPolyData* taubin_smooth(vtkPolyData*, vtkDoubleArray*, double, double, int);
+std::unordered_map<int, std::vector<int>> get_flat_areas(vtkPolyData*, double[3], double);

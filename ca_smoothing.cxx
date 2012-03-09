@@ -1,54 +1,5 @@
 #include "ca_smoothing.h"
 
-int main(int argc, char *argv[])
-{
-    const double stack_orientation[3] = { 0, 0, 1 };
-    vtkPolyData *stl, *nm, *cl, *pd, *tpd;
-    vtkPolyDataNormals *normals;
-    vtkCleanPolyData *clean;
-    vtkIdList *vertices_staircase;
-    vtkDoubleArray* weights;
-    
-    printf("Reading STL\n");
-    stl = read_stl(argv[1]);
-
-    printf("Generating the normals\n");
-    normals = vtkPolyDataNormals::New();
-    normals->SetInput(stl);
-    normals->ComputeCellNormalsOn();
-    normals->Update();
-
-    printf("Cleaning the polydata\n");
-    clean = vtkCleanPolyData::New();
-    clean->SetInput(normals->GetOutput());
-    clean->Update();
-
-    pd = clean->GetOutput();
-    pd->BuildLinks();
-
-    printf("Finding staircase artifacts\n");
-    vertices_staircase = find_staircase_artifacts(pd, stack_orientation, atof(argv[2]));
-    printf("Calculating the Weights\n");
-    weights = calc_artifacts_weight(pd, vertices_staircase, atof(argv[3]), atof(argv[4]));
-    printf("Taubin Smooth\n");
-    tpd = taubin_smooth(pd, weights, 0.5, -0.53, atoi(argv[5]));
-
-    vertices_staircase->Delete();
-    weights->Delete();
-    
-    vtkXMLPolyDataWriter *writer = vtkXMLPolyDataWriter::New();
-    writer->SetInput(tpd);
-    writer->SetFileName("saida.vtp");
-    writer->Write();
-    
-    vtkPLYWriter *stl_writer = vtkPLYWriter::New();
-    stl_writer->SetInput(tpd);
-    stl_writer->SetFileName(argv[6]);
-    stl_writer->Write();
-
-    return 0;
-}
-
 vtkPolyData* read_stl(char* filename) {
     vtkSTLReader *stl_reader = vtkSTLReader::New();
     stl_reader->SetFileName(filename);
@@ -240,7 +191,8 @@ Point calc_d(vtkPolyData* pd, int vid){
         vtkCell* face = pd->GetCell(fid);
         for (int i=0; i < 3; i++) {
             int vjid = face->GetPointId(i);
-            vertices.insert(vjid);
+            if (vjid != vid)
+                vertices.insert(vjid);
         }
     }
     idfaces->Delete();
@@ -264,6 +216,12 @@ Point calc_d(vtkPolyData* pd, int vid){
 }
 
 vtkPolyData* taubin_smooth(vtkPolyData* pd, vtkDoubleArray* weights, double l, double m, int steps){
+    /*
+     * Implementation of Taubin's smooth algorithm described in the paper "A
+     * Signal Processing Approach To Fair Surface Design". His benefeat is it
+     * avoids to 
+     *
+     */
     double vi[3];
     vtkPolyData* new_pd = vtkPolyData::New();
     new_pd->DeepCopy(pd);
@@ -300,4 +258,14 @@ vtkPolyData* taubin_smooth(vtkPolyData* pd, vtkDoubleArray* weights, double l, d
     }
     free(D);
     return new_pd;
+}
+
+std::unordered_map<int, std::vector<int>> get_flat_areas(vtkPolyData* pd, double stack_orientation[3], double tmax, int msize) {
+    /* Returns each flat area in the given *vtkPolydata pd*. To be considered a
+     * flat area it must have normal bellow *tmax* related to the
+     * *stack_orientation* and have at least *msize* triangles. The result is
+     * returned as hash_map.
+     */
+    std::unordered_map<int, std::vector<int>> flat_areas;
+    return flat_areas;
 }
