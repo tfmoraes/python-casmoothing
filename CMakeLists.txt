@@ -36,7 +36,14 @@ SWIG_ADD_MODULE(ca_smoothing python ca_smoothing.i ca_smoothing.cxx)
 SWIG_LINK_LIBRARIES(ca_smoothing ${PYTHON_LIBRARIES} ${VTK_LIBRARIES} ${Libraries})
 
 IF (CMAKE_COMPILER_IS_GNUCXX)
-	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++0x")
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+
+	# If g++ is greater than 4.6, set to use c++0x standard.
+	execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GXX_VERSION)
+	if(GXX_VERSION VERSION_GREATER "4.6")
+		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+	endif(GXX_VERSION VERSION_GREATER "4.6")
+
 ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 CHECK_INCLUDE_FILE_CXX (unordered_map HAVE_CXX0X)
