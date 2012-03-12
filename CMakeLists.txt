@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 2.6)
- 
-if(CMAKE_COMPILER_IS_GNUCXX)
-	list(APPEND CMAKE_CXX_FLAGS "-std=c++0x")
-endif()
+INCLUDE(CPack)
+INCLUDE(CheckIncludeFile)
+INCLUDE(CheckIncludeFileCXX)
+INCLUDE(CheckFunctionExists)
 
 PROJECT(ca_smoothing)
+ 
  
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
@@ -31,3 +32,18 @@ SET_SOURCE_FILES_PROPERTIES(ca_smoothing.i PROPERTIES CPLUSPLUS ON)
 
 SWIG_ADD_MODULE(ca_smoothing python ca_smoothing.i ca_smoothing.cxx)
 SWIG_LINK_LIBRARIES(ca_smoothing ${PYTHON_LIBRARIES} ${VTK_LIBRARIES})
+
+IF (CMAKE_COMPILER_IS_GNUCXX)
+	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+
+CHECK_INCLUDE_FILE_CXX (unordered_map HAVE_CXX0X)
+CHECK_INCLUDE_FILE_CXX (tr1/unordered_map HAVE_TR1)
+
+IF (NOT HAVE_CXX0X)
+	SET (HAVE_CXX0X 0)
+ENDIF (NOT HAVE_CXX0X)
+
+IF (NOT HAVE_TR1)
+	SET (HAVE_TR1 0)
+ENDIF (NOT HAVE_TR1)

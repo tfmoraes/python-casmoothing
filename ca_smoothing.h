@@ -1,6 +1,16 @@
 #include <math.h>
-#include <map>
-#include<unordered_map>
+
+#ifdef HAVE_CXX0X
+    #include<unordered_map>
+    #define MAP std::unordered_map
+#elif HAVE_TR1
+    #include <tr1/unordered_map>
+    #define MAP std::tr1::unordered_map
+#else
+    #include <map>
+    #define MAP std::map
+#endif
+
 #include <queue>
 #include <set>
 #include <vector>
@@ -50,4 +60,4 @@ vtkIdList* get_near_vertices_to_v(vtkPolyData*, int, double);
 vtkDoubleArray* calc_artifacts_weight(vtkPolyData*, vtkIdList*, double, double);
 Point calc_d(vtkPolyData*, int);
 vtkPolyData* taubin_smooth(vtkPolyData*, vtkDoubleArray*, double, double, int);
-std::unordered_map<int, std::vector<int>> get_flat_areas(vtkPolyData*, double[3], double);
+MAP<int, std::vector<int> > get_flat_areas(vtkPolyData*, double[3], double);

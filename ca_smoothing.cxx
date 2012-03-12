@@ -13,7 +13,7 @@ vtkPolyData* ca_smoothing(vtkPolyData* pd, double T, double tmax, double bmin, i
     vtkDoubleArray* weights;
 
     printf("Finding staircase artifacts\n");
-    printf("Numero de pontos %ld", pd->GetNumberOfPoints());
+    printf("Number of points %lld\n", pd->GetNumberOfPoints());
     vertices_staircase = find_staircase_artifacts(pd, stack_orientation, T);
     printf("Calculating the Weights\n");
     weights = calc_artifacts_weight(pd, vertices_staircase, tmax, bmin);
@@ -99,8 +99,8 @@ vtkIdList* get_near_vertices_to_v(vtkPolyData* pd, int v, double dmax){
     double vi[3], vj[3], d;
     int n=0, nf, fid;
     
-    std::unordered_map <int, bool> status_v;
-    std::unordered_map <int, bool> status_f;
+    MAP<int, bool> status_v;
+    MAP<int, bool> status_f;
     std::queue <int> to_visit;
 
     vtkIdList* near_vertices = vtkIdList::New();
@@ -279,12 +279,12 @@ vtkPolyData* taubin_smooth(vtkPolyData* pd, vtkDoubleArray* weights, double l, d
     return new_pd;
 }
 
-std::unordered_map<int, std::vector<int>> get_flat_areas(vtkPolyData* pd, double stack_orientation[3], double tmax, int msize) {
+MAP<int, std::vector<int> > get_flat_areas(vtkPolyData* pd, double stack_orientation[3], double tmax, int msize) {
     /* Returns each flat area in the given *vtkPolydata pd*. To be considered a
      * flat area it must have normal bellow *tmax* related to the
      * *stack_orientation* and have at least *msize* triangles. The result is
      * returned as hash_map.
      */
-    std::unordered_map<int, std::vector<int>> flat_areas;
+    MAP<int, std::vector<int> > flat_areas;
     return flat_areas;
 }
