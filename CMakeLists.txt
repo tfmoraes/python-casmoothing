@@ -20,20 +20,26 @@ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 add_library(ca_smoothing SHARED ca_smoothing.cxx)
 add_executable(ca_smoothing_app ca_smoothing_app.cxx)
 
-SET (Libraries vtkPythonCore)
- 
-if(VTK_LIBRARIES)
-	target_link_libraries(ca_smoothing ${VTK_LIBRARIES} ${Libraries})
-	target_link_libraries(ca_smoothing_app ca_smoothing ${VTK_LIBRARIES} ${Libraries})
-else()
-  target_link_libraries(ca_smoothing vtkHybrid )
-endif()
+IF (WIN32)
+	SET (Libraries vtkPythonCore)
+ELSEIF()
+	SET (Libraries )
+ENDIF(WIN32)
 
 SET_SOURCE_FILES_PROPERTIES(ca_smoothing.i PROPERTIES CPLUSPLUS ON)
 #SET_SOURCE_FILES_PROPERTIES(ca_smoothing.i PROPERTIES SWIG_FLAGS "-includeall")
-
 SWIG_ADD_MODULE(ca_smoothing python ca_smoothing.i ca_smoothing.cxx)
-SWIG_LINK_LIBRARIES(ca_smoothing ${PYTHON_LIBRARIES} ${VTK_LIBRARIES} ${Libraries})
+
+if(VTK_LIBRARIES)
+	target_link_libraries(ca_smoothing ${VTK_LIBRARIES} ${Libraries})
+	target_link_libraries(ca_smoothing_app ca_smoothing ${VTK_LIBRARIES} ${Libraries})
+        SWIG_LINK_LIBRARIES(ca_smoothing ${PYTHON_LIBRARIES} ${VTK_LIBRARIES} ${Libraries})
+else()
+        target_link_libraries(ca_smoothing vtkHybrid )
+        target_link_libraries(ca_smoothing_app ca_smoothing vtkHybrid ${Libraries})
+	SWIG_LINK_LIBRARIES(ca_smoothing vtkHybrid vtkCommon vtkHybridPythonD vtkFiltering ${PYTHON_LIBRARIES} ${Libraries})
+       
+endif()
 
 IF (CMAKE_COMPILER_IS_GNUCXX)
 	set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")

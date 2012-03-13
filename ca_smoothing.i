@@ -24,16 +24,20 @@
 %{
     #include "vtkPythonUtil.h"
     #include "vtkPolyData.h"
+    #if (VTK_MAJOR_VERSION > 5 ||((VTK_MAJOR_VERSION == 5)&&(VTK_MINOR_VERSION > 6)))
+        #define vtkPythonGetObjectFromPointer vtkPythonUtil::GetObjectFromPointer
+        #define vtkPythonGetPointerFromObject vtkPythonUtil::GetPointerFromObject
+    #endif
 %}
 
 %typemap(out) vtkPolyData* {
   PyImport_ImportModule("vtk");
-  $result = vtkPythonUtil::GetObjectFromPointer ( (vtkPolyData*)$1 );
+  $result =  vtkPythonGetObjectFromPointer( (vtkPolyData*)$1 );
 }
 
 %typemap(in) vtkPolyData* {
-  /*$1 = NULL;*/
-  $1 = (vtkPolyData*) vtkPythonUtil::GetPointerFromObject ( $input, "vtkPolyData" );
+  $1 = NULL;
+  $1 = (vtkPolyData*) vtkPythonGetPointerFromObject ( $input, "vtkPolyData" );
   if ( $1 == NULL ) { SWIG_fail; }
 }
 
