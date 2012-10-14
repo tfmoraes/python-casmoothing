@@ -5,6 +5,10 @@ INCLUDE(CheckIncludeFileCXX)
 INCLUDE(CheckFunctionExists)
 
 PROJECT(ca_smoothing)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
  
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
@@ -33,11 +37,11 @@ SWIG_ADD_MODULE(ca_smoothing python ca_smoothing.i ca_smoothing.cxx)
 if(VTK_LIBRARIES)
 	target_link_libraries(ca_smoothing ${VTK_LIBRARIES} ${Libraries})
 	target_link_libraries(ca_smoothing_app ca_smoothing ${VTK_LIBRARIES} ${Libraries})
-        SWIG_LINK_LIBRARIES(ca_smoothing ${PYTHON_LIBRARIES} ${VTK_LIBRARIES} ${Libraries})
+        SWIG_LINK_LIBRARIES(ca_smoothing ${PYTHON_LIBRARIES} ${VTK_LIBRARIES} ${Libraries} ca_smoothing)
 else()
         target_link_libraries(ca_smoothing vtkHybrid )
         target_link_libraries(ca_smoothing_app ca_smoothing vtkHybrid ${Libraries})
-	SWIG_LINK_LIBRARIES(ca_smoothing vtkHybrid vtkCommon vtkHybridPythonD vtkFiltering ${PYTHON_LIBRARIES} ${Libraries})
+	SWIG_LINK_LIBRARIES(ca_smoothing vtkHybrid vtkCommon vtkHybridPythonD vtkFiltering ${PYTHON_LIBRARIES} ${Libraries} ca_smoothing)
        
 endif()
 
@@ -62,3 +66,10 @@ ENDIF (NOT HAVE_CXX0X)
 IF (NOT HAVE_TR1)
 	SET (HAVE_TR1 0)
 ENDIF (NOT HAVE_TR1)
+
+
+# Finding python site-packages dir
+execute_process( COMMAND python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE ) 
+
+INSTALL(TARGETS ca_smoothing _ca_smoothing DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_SITE_PACKAGES})
+INSTALL(FILES ${CMAKE_BINARY_DIR}/ca_smoothing.py DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_SITE_PACKAGES})
