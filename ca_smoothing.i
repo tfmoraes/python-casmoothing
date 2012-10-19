@@ -42,7 +42,6 @@
 }
 
 extern vtkPolyData* ca_smoothing (vtkPolyData*, double, double, double, int);
-extern vtkPolyData* get_sphere (void);
 
 %{
    #include "stdio.h"

@@ -1,10 +1,5 @@
 #include "ca_smoothing.h"
  
-vtkPolyData* get_sphere (void) {
-    vtkPolyData  *pd;
-    return pd;
-}
-
 vtkPolyData* ca_smoothing(vtkPolyData* pd, double T, double tmax, double bmin, int n_iter) {
     const double stack_orientation[3] = { 0, 0, 1 };
 
