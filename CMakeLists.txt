@@ -68,7 +68,7 @@ ENDIF (NOT HAVE_TR1)
 
 
 # Finding python site-packages dir
-execute_process( COMMAND python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE ) 
+execute_process( COMMAND python -c "from distutils.sysconfig import get_python_lib; print get_python_lib(prefix='')" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE ) 
 
 INSTALL(TARGETS _ca_smoothing DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_SITE_PACKAGES})
 INSTALL(FILES ${CMAKE_BINARY_DIR}/lib/ca_smoothing.py DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_SITE_PACKAGES})
