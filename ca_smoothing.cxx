@@ -34,7 +34,6 @@ vtkIdList* find_staircase_artifacts(vtkPolyData* pd, const double stack_orientat
     
     double *ni;
     vtkIdList *output = vtkIdList::New();
-    vtkDoubleArray *scalars = vtkDoubleArray::New();
     vtkIdList *idfaces;//idfaces = vtk.vtkIdList()
     
     nv = pd->GetNumberOfPoints(); // Number of vertices.
@@ -71,15 +70,9 @@ vtkIdList* find_staircase_artifacts(vtkPolyData* pd, const double stack_orientat
         // output
         if ((abs(max_z - min_z) >= T) || (abs(max_y - min_y) >= T) || (abs(max_x - min_x) >= T)) {
             output->InsertNextId(vid);
-            scalars->InsertNextValue(1);
-        }
-        else {
-            scalars->InsertNextValue(0);
         }
         idfaces->Delete();
     }
-    vtkPointData* pointData = pd->GetPointData();
-    pointData->SetScalars(scalars);
     return output;
 }
 
@@ -162,7 +155,6 @@ vtkDoubleArray* calc_artifacts_weight(vtkPolyData* pd, vtkIdList* vertices_stair
     int nid = vertices_staircase->GetNumberOfIds();
     vtkIdList* near_vertices;
     vtkDoubleArray* weights = vtkDoubleArray::New();
-    vtkDataArray* scalars = pd->GetPointData()->GetScalars();
     for (int i=0; i < pd->GetNumberOfPoints(); i++){
         weights->InsertNextValue(0);
     }
@@ -180,14 +172,11 @@ vtkDoubleArray* calc_artifacts_weight(vtkPolyData* pd, vtkIdList* vertices_stair
             value = (1.0 - d/tmax) * (1 - bmin) + bmin;
             if (value > weights->GetValue(vjid)) {
                 weights->SetValue(vjid, value);
-                scalars->SetTuple1(vjid, value);
             }
         }
         near_vertices->Delete();
     }
 
-    vtkPointData* pointData = pd->GetPointData();
-    pointData->SetScalars(scalars);
     return weights;
 }
 
