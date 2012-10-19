@@ -40,7 +40,7 @@ if(VTK_LIBRARIES)
 else()
         #target_link_libraries(ca_smoothing vtkHybrid )
         #target_link_libraries(ca_smoothing_app ca_smoothing vtkHybrid ${Libraries})
-	SWIG_LINK_LIBRARIES(ca_smoothing vtkHybrid vtkCommon vtkHybridPythonD vtkFiltering ${PYTHON_LIBRARIES} ${Libraries})
+	SWIG_LINK_LIBRARIES(ca_smoothing ${PYTHON_LIBRARIES} vtkHybrid vtkCommon vtkHybridPythonD vtkFiltering)
        
 endif()
 
