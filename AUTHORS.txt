@@ -1,0 +1,3 @@
+The PRIMARY AUTHORS of "context aware smoothing" python library are (and/or have been):
+
+    * Thiago Franco de Moraes
