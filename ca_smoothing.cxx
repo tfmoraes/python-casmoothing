@@ -1,3 +1,22 @@
+#--------------------------------------------------------------------------
+# Software:     Context Aware Smoothing
+# Copyright:    (C) 2012  Centro de Tecnologia da Informação Renato Archer
+# Homepage:     https://github.com/tfmoraes/context_aware_smoothing
+# Contact:      tfmoraes@cti.gov.br
+# License:      GNU - GPL 2 (LICENSE.txt/LICENCA.txt)
+#--------------------------------------------------------------------------
+#    Este programa e software livre; voce pode redistribui-lo e/ou
+#    modifica-lo sob os termos da Licenca Publica Geral GNU, conforme
+#    publicada pela Free Software Foundation; de acordo com a versao 2
+#    da Licenca.
+#
+#    Este programa eh distribuido na expectativa de ser util, mas SEM
+#    QUALQUER GARANTIA; sem mesmo a garantia implicita de
+#    COMERCIALIZACAO ou de ADEQUACAO A QUALQUER PROPOSITO EM
+#    PARTICULAR. Consulte a Licenca Publica Geral GNU para obter mais
+#    detalhes.
+#--------------------------------------------------------------------------
+
 #include "ca_smoothing.h"
  
 vtkPolyData* ca_smoothing(vtkPolyData* pd, double T, double tmax, double bmin, int n_iter) {
@@ -34,11 +53,10 @@ vtkIdList* find_staircase_artifacts(vtkPolyData* pd, const double stack_orientat
     
     double *ni;
     vtkIdList *output = vtkIdList::New();
-    vtkIdList *idfaces;//idfaces = vtk.vtkIdList()
+    vtkIdList *idfaces = vtkIdList::New();//idfaces = vtk.vtkIdList()
     
     nv = pd->GetNumberOfPoints(); // Number of vertices.
     for (int vid=0; vid < nv; vid++){ //for vid in xrange(nv):
-        idfaces = vtkIdList::New();//idfaces = vtk.vtkIdList()
         pd->GetPointCells(vid, idfaces); //pd.GetPointCells(vid, idfaces) # Getting faces connected to face vid.
         nf = idfaces->GetNumberOfIds();
     
@@ -64,14 +82,16 @@ vtkIdList* find_staircase_artifacts(vtkPolyData* pd, const double stack_orientat
 
             if (of_x > max_x) max_x = of_x;
             if (of_x < min_x) min_x = of_x;
+
+            // Getting the ones which normals dot is 90°, its vertex is added to
+            // output
+            if ((abs(max_z - min_z) >= T) || (abs(max_y - min_y) >= T) || (abs(max_x - min_x) >= T)) {
+                output->InsertNextId(vid);
+                break;
+            }
         }
 
-        // Getting the ones which normals dot is 90°, its vertex is added to
-        // output
-        if ((abs(max_z - min_z) >= T) || (abs(max_y - min_y) >= T) || (abs(max_x - min_x) >= T)) {
-            output->InsertNextId(vid);
-        }
-        idfaces->Delete();
+        idfaces->Reset();
     }
     return output;
 }
@@ -92,12 +112,11 @@ vtkIdList* get_near_vertices_to_v(vtkPolyData* pd, int v, double dmax){
     std::queue <int> to_visit;
 
     vtkIdList* near_vertices = vtkIdList::New();
-    vtkIdList* idfaces;
+    vtkIdList* idfaces = vtkIdList::New();
 
     pd->GetPoint(v, vi); // The position of vertex v
 
     while (1) {
-        idfaces = vtkIdList::New();
         pd->GetPointCells(v, idfaces);
         nf = idfaces->GetNumberOfIds();
         for(int nid=0; nid < nf; nid++) {
@@ -134,7 +153,7 @@ vtkIdList* get_near_vertices_to_v(vtkPolyData* pd, int v, double dmax){
             break;
         v = to_visit.front();
         to_visit.pop();
-        idfaces->Delete();
+        idfaces->Reset();
     }
 
     return near_vertices;
