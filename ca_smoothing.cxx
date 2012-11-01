@@ -1,21 +1,21 @@
-#--------------------------------------------------------------------------
-# Software:     Context Aware Smoothing
-# Copyright:    (C) 2012  Centro de Tecnologia da Informação Renato Archer
-# Homepage:     https://github.com/tfmoraes/context_aware_smoothing
-# Contact:      tfmoraes@cti.gov.br
-# License:      GNU - GPL 2 (LICENSE.txt/LICENCA.txt)
-#--------------------------------------------------------------------------
-#    Este programa e software livre; voce pode redistribui-lo e/ou
-#    modifica-lo sob os termos da Licenca Publica Geral GNU, conforme
-#    publicada pela Free Software Foundation; de acordo com a versao 2
-#    da Licenca.
-#
-#    Este programa eh distribuido na expectativa de ser util, mas SEM
-#    QUALQUER GARANTIA; sem mesmo a garantia implicita de
-#    COMERCIALIZACAO ou de ADEQUACAO A QUALQUER PROPOSITO EM
-#    PARTICULAR. Consulte a Licenca Publica Geral GNU para obter mais
-#    detalhes.
-#--------------------------------------------------------------------------
+//--------------------------------------------------------------------------
+// Software:     Context Aware Smoothing
+// Copyright:    (C) 2012  Centro de Tecnologia da Informação Renato Archer
+// Homepage:     https://github.com/tfmoraes/context_aware_smoothing
+// Contact:      tfmoraes@cti.gov.br
+// License:      GNU - GPL 2 (LICENSE.txt/LICENCA.txt)
+//--------------------------------------------------------------------------
+//    Este programa e software livre; voce pode redistribui-lo e/ou
+//    modifica-lo sob os termos da Licenca Publica Geral GNU, conforme
+//    publicada pela Free Software Foundation; de acordo com a versao 2
+//    da Licenca.
+//
+//    Este programa eh distribuido na expectativa de ser util, mas SEM
+//    QUALQUER GARANTIA; sem mesmo a garantia implicita de
+//    COMERCIALIZACAO ou de ADEQUACAO A QUALQUER PROPOSITO EM
+//    PARTICULAR. Consulte a Licenca Publica Geral GNU para obter mais
+//    detalhes.
+//--------------------------------------------------------------------------
 
 #include "ca_smoothing.h"
  
