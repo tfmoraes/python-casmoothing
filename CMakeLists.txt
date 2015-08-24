@@ -11,6 +11,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
  
 find_package(VTK REQUIRED)
+find_package(VTK COMPONENTS vtkCommonCore vtkWrappingTools vtkCommonDataModel )
 include(${VTK_USE_FILE})
 
 FIND_PACKAGE(SWIG REQUIRED)
@@ -21,10 +22,12 @@ INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
+message(${VTK_LIBRARIES})
+
 #add_library(ca_smoothing SHARED ca_smoothing.cxx)
 #add_executable(ca_smoothing_app ca_smoothing_app.cxx)
 
-SET (Libraries vtkPythonCore)
+#SET (Libraries vtkPythonCore)
 
 SET_SOURCE_FILES_PROPERTIES(ca_smoothing.i PROPERTIES CPLUSPLUS ON)
 #SET_SOURCE_FILES_PROPERTIES(ca_smoothing.i PROPERTIES SWIG_FLAGS "-includeall")
