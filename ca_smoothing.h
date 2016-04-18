@@ -34,34 +34,10 @@
 #include <set>
 #include <vector>
 #include <stdlib.h>
-#include <vtkSmartPointer.h>
 #include <vtkIdList.h>
 #include <vtkPolyData.h>
 #include <vtkCellData.h>
 #include <vtkDoubleArray.h>
-#include <vtkFloatArray.h>
-#include <vtkDataSet.h>
-#include <vtkSphereSource.h>
-#include <vtkTriangleFilter.h>
-#include <vtkExtractEdges.h>
-#include <vtkDataSetMapper.h>
-#include <vtkActor.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderer.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkIdTypeArray.h>
-#include <vtkSelectionNode.h>
-#include <vtkSelection.h>
-#include <vtkExtractSelection.h>
-#include <vtkProperty.h>
-#include <vtkVertexGlyphFilter.h>
-#include <vtkSTLReader.h>
-#include <vtkPLYWriter.h>
-#include <vtkPolyDataNormals.h>
-#include <vtkCleanPolyData.h>
-#include <vtkDataArray.h>
-#include <vtkPointData.h>
-#include <vtkXMLPolyDataWriter.h>
 #include <vtkCell.h>
 
 typedef struct _Point

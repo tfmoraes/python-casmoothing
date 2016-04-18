@@ -11,7 +11,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
  
 find_package(VTK REQUIRED)
-find_package(VTK COMPONENTS vtkCommonCore vtkWrappingTools vtkCommonDataModel )
+find_package(VTK COMPONENTS vtkCommonCore vtkWrappingTools vtkCommonDataModel vtkWrappingPythonCore)
 include(${VTK_USE_FILE})
 
 FIND_PACKAGE(SWIG REQUIRED)

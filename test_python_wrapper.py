@@ -8,12 +8,12 @@ stl.SetFileName(sys.argv[1])
 stl.Update()
 
 normals = vtk.vtkPolyDataNormals()
-normals.SetInput(stl.GetOutput())
+normals.SetInputConnection(stl.GetOutputPort())
 normals.ComputeCellNormalsOn()
 normals.Update()
 
 clean = vtk.vtkCleanPolyData()
-clean.SetInput(normals.GetOutput())
+clean.SetInputConnection(normals.GetOutputPort())
 clean.Update()
 
 pd = clean.GetOutput()
@@ -23,5 +23,5 @@ tpd = ca_smoothing.ca_smoothing(pd, 0.7, 3, 0.2, 10)
 
 ply = vtk.vtkPLYWriter()
 ply.SetFileName(sys.argv[2])
-ply.SetInput(tpd)
+ply.SetInputData(tpd)
 ply.Write()
